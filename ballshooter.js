@@ -42,6 +42,7 @@ export function createBallShooter(params) {
     power: 5,
     gravity: 0.05,
     bounceFactor: 0.7,
+    landr: 0,
     ...initialState,
   };
 
@@ -73,6 +74,7 @@ export function createBallShooter(params) {
   let isShooting = false;
   let velocityX = 0;
   let velocityY = 0;
+  let velocityZ = 0;
   const ballRadius = 2.5;
 
   function update() {
@@ -85,7 +87,9 @@ export function createBallShooter(params) {
     head.position.set(shooter.x - 10, launcherY, 0);
 
     barrel.position.set(shooter.x, launcherY, 0);
-    barrel.rotation.set(0, 0, -Math.PI / 2 + angleRad);
+    const landrRad = THREE.MathUtils.degToRad(shooter.landr);
+
+    barrel.rotation.set(0, landrRad, -Math.PI / 2 + angleRad);
   }
 
   function resetBall() {
@@ -100,26 +104,89 @@ export function createBallShooter(params) {
     isShooting = false;
     velocityX = 0;
     velocityY = 0;
+    velocityZ = 0;
   }
 
   function shootBall() {
-    if (isShooting) {
-      return;
-    }
+  if (isShooting) return;
 
-    ball = new THREE.Mesh(
-      new THREE.SphereGeometry(ballRadius, 16, 16),
-      new THREE.MeshPhongMaterial({ color: 0xf06400 })
+  ball = new THREE.Mesh(
+    new THREE.SphereGeometry(ballRadius, 16, 16),
+    new THREE.MeshPhongMaterial({ color: 0xf06400 })
+  );
+
+  group.add(ball);
+
+  const startX = shooter.x;
+  const startY = shooter.machineHeight;
+  const startZ = 0;
+
+  ball.position.set(startX, startY, startZ);
+
+  const g = shooter.gravity;
+
+  let attempts = 0;
+  let validShot = false;
+
+  while (!validShot && attempts < 10) {
+    attempts++;
+
+    // 🎯 random target
+    const targetX = (Math.random() - 0.5) * tableLength * 0.7;
+    const targetZ = (Math.random() - 0.5) * tableWidth * 0.7;
+    const targetY = tableHeight;
+
+    const dx = targetX - startX;
+    const dz = targetZ - startZ;
+    const dy = targetY - startY;
+
+    const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+    // try slightly higher angles for safety
+    const angle = THREE.MathUtils.degToRad(
+      THREE.MathUtils.randFloat(15, 35)
     );
 
-    const angleRad = THREE.MathUtils.degToRad(shooter.angle);
-    ball.position.set(shooter.x, shooter.machineHeight, 0);
-    group.add(ball);
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
 
-    velocityX = shooter.power * Math.cos(angleRad);
-    velocityY = shooter.power * Math.sin(angleRad);
-    isShooting = true;
+    const denom = 2 * cos * cos * (horizontalDist * Math.tan(angle) - dy);
+
+    if (denom <= 0) continue;
+
+    const speed = Math.sqrt((g * horizontalDist * horizontalDist) / denom);
+
+    const vx = (dx / horizontalDist) * speed * cos;
+    const vz = (dz / horizontalDist) * speed * cos;
+    const vy = speed * sin;
+
+    // 🧠 Check height at net (x ≈ 0)
+    const tToNet = (0 - startX) / vx;
+
+    if (tToNet <= 0) continue;
+
+    const yAtNet = startY + vy * tToNet - 0.5 * g * tToNet * tToNet;
+
+    const netHeight = tableHeight + 15; // adjust if needed
+
+    if (yAtNet > netHeight + 2) {
+      // ✅ GOOD SHOT
+      velocityX = vx;
+      velocityY = vy;
+      velocityZ = vz;
+      validShot = true;
+    }
   }
+
+  // fallback if all attempts fail
+  if (!validShot) {
+    velocityX = 5;
+    velocityY = 6;
+    velocityZ = 0;
+  }
+
+  isShooting = true;
+}
 
   function animate() {
     if (!isShooting || !ball) {
@@ -127,6 +194,7 @@ export function createBallShooter(params) {
     }
 
     ball.position.x += velocityX;
+    ball.position.z += velocityZ;
     velocityY -= shooter.gravity;
     ball.position.y += velocityY;
 
