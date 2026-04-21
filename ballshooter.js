@@ -24,7 +24,6 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm";
  * @param {Object} [params.initialState] optional shooter overrides
  * @param {boolean} [params.debugNetHitbox=false] whether to show the net hitbox
  * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
- * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
  */
 export function createBallShooter(params) {
   const {
@@ -133,7 +132,6 @@ export function createBallShooter(params) {
     velocityY = 0;
     velocityZ = 0;
     netCollisionLocked = false;
-    netCollisionLocked = false;
   }
 
   function shootBall() {
@@ -154,7 +152,6 @@ export function createBallShooter(params) {
 
   const g = shooter.gravity;
   const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
-  const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
 
   let attempts = 0;
   let validShot = false;
@@ -162,12 +159,6 @@ export function createBallShooter(params) {
   while (!validShot && attempts < 10) {
     attempts++;
 
-    const targetX = THREE.MathUtils.lerp(
-      tableLength * 0.1,
-      tableLength * 0.28,
-      normalizedPower
-    );
-    const targetZ = THREE.MathUtils.randFloat(-tableWidth * 0.18, tableWidth * 0.18);
     const targetX = THREE.MathUtils.lerp(
       tableLength * 0.1,
       tableLength * 0.28,
@@ -201,18 +192,12 @@ export function createBallShooter(params) {
     const vy = speed * sin;
 
     
-    
     const tToNet = (0 - startX) / vx;
 
     if (tToNet <= 0) continue;
 
     const yAtNet = startY + vy * tToNet - 0.5 * g * tToNet * tToNet;
 
-    const netHeight = tableHeight + 15;
-
-    const timeToTarget = horizontalDist / (speed * cos);
-    const yAtTarget = startY + vy * timeToTarget - 0.5 * g * timeToTarget * timeToTarget;
-    const landsNearTable = Math.abs(yAtTarget - targetY) <= 2;
     const netHeight = tableHeight + 15;
 
     const timeToTarget = horizontalDist / (speed * cos);
@@ -230,8 +215,6 @@ export function createBallShooter(params) {
 
   // fallback if all attempts fail
   if (!validShot) {
-    velocityX = 9;
-    velocityY = 7.5;
     velocityX = 9;
     velocityY = 7.5;
     velocityZ = 0;
@@ -291,8 +274,6 @@ export function createBallShooter(params) {
     }
 
     const outOfBounds =
-      ball.position.x > tableLength / 2 + ballRadius + 60 ||
-      ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.x > tableLength / 2 + ballRadius + 60 ||
       ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.y < -ballRadius;
