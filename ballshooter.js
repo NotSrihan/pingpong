@@ -79,6 +79,7 @@ export function createBallShooter(params) {
   let paddle = null;
   let paddleCollisionLocked = false;
   let netCollisionLocked = false;
+  let returnedByPaddle = false;
   const ballBox = new THREE.Box3();
   const paddleBox = new THREE.Box3();
   const netBox = new THREE.Box3();
@@ -86,6 +87,8 @@ export function createBallShooter(params) {
   const paddleReturnSpeed = 6;
   const paddleLift = 1.2;
   const paddleSidespin = 1.6;
+  const playerSideDespawnPadding = 40;
+  let crossedBackToOpponentSide = false;
 
   function setPaddle(nextPaddle) {
     paddle = nextPaddle;
@@ -118,7 +121,7 @@ export function createBallShooter(params) {
     barrel.rotation.set(0, landrRad, -Math.PI / 2 + angleRad);
   }
 
-  function resetBall() {
+  function resetBall(autoShootNext = false) {
     if (!ball) {
       return;
     }
@@ -131,7 +134,13 @@ export function createBallShooter(params) {
     velocityX = 0;
     velocityY = 0;
     velocityZ = 0;
+    returnedByPaddle = false;
+    crossedBackToOpponentSide = false;
     netCollisionLocked = false;
+
+    if (autoShootNext) {
+      shootBall();
+    }
   }
 
   function shootBall() {
@@ -149,6 +158,8 @@ export function createBallShooter(params) {
   const startZ = 0;
 
   ball.position.set(startX, startY, startZ);
+  returnedByPaddle = false;
+  crossedBackToOpponentSide = false;
 
   const g = shooter.gravity;
   const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
@@ -233,10 +244,21 @@ export function createBallShooter(params) {
     velocityY -= shooter.gravity;
     ball.position.y += velocityY;
 
+    if (returnedByPaddle && ball.position.x < 0) {
+      crossedBackToOpponentSide = true;
+    }
+
     const overTableX = Math.abs(ball.position.x) <= tableLength / 2;
     const overTableZ = Math.abs(ball.position.z) <= tableWidth / 2;
 
     if (overTableX && overTableZ && ball.position.y <= tableHeight + ballRadius) {
+      const bouncedOnPlayerSide = ball.position.x > 0;
+
+      if (returnedByPaddle && bouncedOnPlayerSide) {
+        resetBall();
+        return;
+      }
+
       ball.position.y = tableHeight + ballRadius;
       velocityY = Math.abs(velocityY) > 0.1 ? -velocityY * shooter.bounceFactor : 0;
     }
@@ -246,6 +268,11 @@ export function createBallShooter(params) {
       netBox.setFromObject(netHitbox);
 
       if (!netCollisionLocked && ballBox.intersectsBox(netBox)) {
+        if (ball.position.x >= 0) {
+          resetBall();
+          return;
+        }
+
         const xDirection = velocityX === 0 ? 1 : Math.sign(velocityX);
         const retainedSpeed = Math.max(Math.abs(velocityX) * 0.8, 3.5);
         velocityX = -xDirection * retainedSpeed;
@@ -265,6 +292,7 @@ export function createBallShooter(params) {
 
       if (!paddleCollisionLocked && ballBox.intersectsBox(paddleBox)) {
         applyPaddleBounce();
+        returnedByPaddle = true;
 
         ball.position.x = paddleBox.min.x - ballRadius - 0.5;
         paddleCollisionLocked = true;
@@ -273,13 +301,16 @@ export function createBallShooter(params) {
       }
     }
 
+    const playerSideLimit = paddle
+      ? paddle.position.x + ballRadius + playerSideDespawnPadding
+      : tableLength / 2 + ballRadius + 60;
     const outOfBounds =
-      ball.position.x > tableLength / 2 + ballRadius + 60 ||
+      ball.position.x > playerSideLimit ||
       ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.y < -ballRadius;
 
     if (outOfBounds) {
-      resetBall();
+      resetBall(crossedBackToOpponentSide);
     }
   }
 
