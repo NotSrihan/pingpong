@@ -23,7 +23,7 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm";
  * @param {number} params.tableHeight table top height used for bounce checks
  * @param {Object} [params.initialState] optional shooter overrides
  * @param {boolean} [params.debugNetHitbox=false] whether to show the net hitbox
- * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function}}
+ * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
  */
 export function createBallShooter(params) {
   const {
@@ -76,6 +76,17 @@ export function createBallShooter(params) {
   let velocityY = 0;
   let velocityZ = 0;
   const ballRadius = 2.5;
+  let paddle = null;
+  let paddleCollisionLocked = false;
+  let netCollisionLocked = false;
+  const ballBox = new THREE.Box3();
+  const paddleBox = new THREE.Box3();
+  const netBox = new THREE.Box3();
+
+  function setPaddle(nextPaddle) {
+    paddle = nextPaddle;
+    paddleCollisionLocked = false;
+  }
 
   function update() {
     const launcherY = shooter.machineHeight;
@@ -105,6 +116,7 @@ export function createBallShooter(params) {
     velocityX = 0;
     velocityY = 0;
     velocityZ = 0;
+    netCollisionLocked = false;
   }
 
   function shootBall() {
@@ -124,6 +136,7 @@ export function createBallShooter(params) {
   ball.position.set(startX, startY, startZ);
 
   const g = shooter.gravity;
+  const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
 
   let attempts = 0;
   let validShot = false;
@@ -131,9 +144,12 @@ export function createBallShooter(params) {
   while (!validShot && attempts < 10) {
     attempts++;
 
-    // 🎯 random target
-    const targetX = (Math.random() - 0.5) * tableLength * 0.7;
-    const targetZ = (Math.random() - 0.5) * tableWidth * 0.7;
+    const targetX = THREE.MathUtils.lerp(
+      tableLength * 0.1,
+      tableLength * 0.28,
+      normalizedPower
+    );
+    const targetZ = THREE.MathUtils.randFloat(-tableWidth * 0.18, tableWidth * 0.18);
     const targetY = tableHeight;
 
     const dx = targetX - startX;
@@ -160,17 +176,21 @@ export function createBallShooter(params) {
     const vz = (dz / horizontalDist) * speed * cos;
     const vy = speed * sin;
 
-    // 🧠 Check height at net (x ≈ 0)
+    
     const tToNet = (0 - startX) / vx;
 
     if (tToNet <= 0) continue;
 
     const yAtNet = startY + vy * tToNet - 0.5 * g * tToNet * tToNet;
 
-    const netHeight = tableHeight + 15; // adjust if needed
+    const netHeight = tableHeight + 15;
 
-    if (yAtNet > netHeight + 2) {
-      // ✅ GOOD SHOT
+    const timeToTarget = horizontalDist / (speed * cos);
+    const yAtTarget = startY + vy * timeToTarget - 0.5 * g * timeToTarget * timeToTarget;
+    const landsNearTable = Math.abs(yAtTarget - targetY) <= 2;
+
+    if (yAtNet > netHeight + 1.5 && landsNearTable) {
+      
       velocityX = vx;
       velocityY = vy;
       velocityZ = vz;
@@ -180,8 +200,8 @@ export function createBallShooter(params) {
 
   // fallback if all attempts fail
   if (!validShot) {
-    velocityX = 5;
-    velocityY = 6;
+    velocityX = 9;
+    velocityY = 7.5;
     velocityZ = 0;
   }
 
@@ -207,19 +227,47 @@ export function createBallShooter(params) {
     }
 
     if (netHitbox) {
-      const ballBox = new THREE.Box3().setFromObject(ball);
-      const netBox = new THREE.Box3().setFromObject(netHitbox);
+      ballBox.setFromObject(ball);
+      netBox.setFromObject(netHitbox);
 
-      if (ballBox.intersectsBox(netBox)) {
-        velocityX *= -0.5;
-        velocityY *= 0.5;
-        ball.position.x -= 5;
+      if (!netCollisionLocked && ballBox.intersectsBox(netBox)) {
+        const xDirection = velocityX === 0 ? 1 : Math.sign(velocityX);
+        const retainedSpeed = Math.max(Math.abs(velocityX) * 0.8, 3.5);
+        velocityX = -xDirection * retainedSpeed;
+        velocityY *= 0.75;
+        ball.position.x = xDirection > 0
+          ? netBox.min.x - ballRadius - 0.5
+          : netBox.max.x + ballRadius + 0.5;
+        netCollisionLocked = true;
+      } else if (!ballBox.intersectsBox(netBox)) {
+        netCollisionLocked = false;
+      }
+    }
+
+    if (paddle) {
+      ballBox.setFromObject(ball);
+      paddleBox.setFromObject(paddle);
+
+      if (!paddleCollisionLocked && ballBox.intersectsBox(paddleBox)) {
+        const zOffset = ball.position.z - paddle.position.z;
+        const yOffset = ball.position.y - paddle.position.y;
+        const normalizedZ = THREE.MathUtils.clamp(zOffset / 18, -1, 1);
+        const normalizedY = THREE.MathUtils.clamp(yOffset / 18, -1, 1);
+
+        velocityX = -Math.max(Math.abs(velocityX), 3.5);
+        velocityY += normalizedY * 1.2;
+        velocityZ += normalizedZ * 1.6;
+
+        ball.position.x = paddleBox.min.x - ballRadius - 0.5;
+        paddleCollisionLocked = true;
+      } else if (!ballBox.intersectsBox(paddleBox)) {
+        paddleCollisionLocked = false;
       }
     }
 
     const outOfBounds =
-      ball.position.x > tableLength / 2 + ballRadius ||
-      ball.position.x < -tableLength / 2 - ballRadius ||
+      ball.position.x > tableLength / 2 + ballRadius + 60 ||
+      ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.y < -ballRadius;
 
     if (outOfBounds) {
@@ -237,7 +285,7 @@ export function createBallShooter(params) {
 
   update();
 
-  return { group, gui, shooter, update, animate, shootBall, resetBall };
+  return { group, gui, shooter, update, animate, shootBall, resetBall, setPaddle };
 }
 
 /**

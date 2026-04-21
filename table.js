@@ -5,8 +5,8 @@ export const TABLE_DEFAULTS = {
   tableThickness: 2.5,
   tableWidth: 152.5,
   tableHeight: 76,
-  roomLength: 674,
-  roomWidth: 352.5,
+  roomLength: 800,
+  roomWidth: 700,
   roomHeight: 500,
   legRadius: 3,
   netHeight: 15.25,
@@ -49,6 +49,7 @@ export function createRoom(params = {}) {
   const geometry = new THREE.BoxGeometry(roomLength, roomHeight, roomWidth);
   const room = new THREE.Mesh(geometry, material);
   room.position.y = roomHeight / 2;
+  room.receiveShadow = true;
   return room;
 }
 
@@ -83,9 +84,9 @@ export function createTableLight(params = {}) {
   const {
     tableHeight = TABLE_DEFAULTS.tableHeight,
     ambientColor = 0xffffff,
-    ambientIntensity = 1,
+    ambientIntensity = 0.6,
     directionalColor = 0xffffff,
-    directionalIntensity = 1,
+    directionalIntensity = 0.3,
     directionalPosition = new THREE.Vector3(50, 100, 50),
     spotColor = 0xffffff,
     spotIntensity = 5,
@@ -123,6 +124,11 @@ export function createTableLight(params = {}) {
   spotLight.penumbra = 0.1;
   spotLight.decay = 0;
   spotLight.distance = 200;
+
+  spotLight.castShadow = true;
+  spotLight.shadow.mapSize.width = 1024;
+  spotLight.shadow.mapSize.height = 1024; 
+
   spotLight.target.position.set(0, tableHeight, 0);
   group.add(spotLight);
   group.add(spotLight.target);
@@ -175,6 +181,8 @@ export function createTable(params = {}) {
     new THREE.MeshPhongMaterial({ color: 0x0b6623 })
   );
   tabletop.position.y = tableHeight;
+  tabletop.castShadow = true;
+  tabletop.receiveShadow = true;
   group.add(tabletop);
 
   const centerLine = new THREE.Mesh(
