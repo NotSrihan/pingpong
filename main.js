@@ -98,6 +98,30 @@ function remakePaddle() {
 
 remakePaddle();
 
+
+// Had to look up how to do this
+function setLogoFromFile(file) {
+
+  const texture = new THREE.TextureLoader().load(
+    URL.createObjectURL(file),
+    () => {
+      const logo = paddle.getObjectByName("paddleLogo");
+      if (!logo) return;
+
+      if (logo.material.map) logo.material.map.dispose();
+
+      logo.material.map = texture;
+      logo.material.needsUpdate = true;
+    }
+  );
+}
+
+window.addEventListener("dragover", e => e.preventDefault());
+
+window.addEventListener("drop", e => {
+  e.preventDefault();
+  setLogoFromFile(e.dataTransfer.files[0]);
+});
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const hitPoint = new THREE.Vector3();

@@ -143,8 +143,9 @@ export function makePaddle(params) {
     const logoMat = new THREE.MeshPhongMaterial({ map: logoTexture, transparent: true, opacity: 0.6, alphaTest: 0.4});
     const logo = new THREE.Mesh( logoGeom, logoMat );
 
-    logo.scale.set(1, 1, 1);
+    logo.name = "paddleLogo";
 
+    logo.scale.set(1, 1, 1);
     logo.position.z = paddleBaseDepth / 2 + .01;
 
     group.add(paddle);
