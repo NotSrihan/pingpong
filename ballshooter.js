@@ -24,6 +24,7 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm";
  * @param {Object} [params.initialState] optional shooter overrides
  * @param {boolean} [params.debugNetHitbox=false] whether to show the net hitbox
  * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
+ * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
  */
 export function createBallShooter(params) {
   const {
@@ -39,9 +40,9 @@ export function createBallShooter(params) {
     x: -tableLength / 2 + 13,
     machineHeight: tableHeight + 30,
     angle: 8,
-    power: 5,
-    gravity: 0.05,
-    bounceFactor: 0.7,
+    power: 11,
+    gravity: 0.15,
+    bounceFactor: 1,
     landr: 0,
     ...initialState,
   };
@@ -82,10 +83,25 @@ export function createBallShooter(params) {
   const ballBox = new THREE.Box3();
   const paddleBox = new THREE.Box3();
   const netBox = new THREE.Box3();
+  const paddleBounceRange = 18;
+  const paddleReturnSpeed = 6;
+  const paddleLift = 1.2;
+  const paddleSidespin = 1.6;
 
   function setPaddle(nextPaddle) {
     paddle = nextPaddle;
     paddleCollisionLocked = false;
+  }
+
+  function applyPaddleBounce() {
+    const hitOffsetZ = ball.position.z - paddle.position.z;
+    const hitOffsetY = ball.position.y - paddle.position.y;
+    const hitZ = THREE.MathUtils.clamp(hitOffsetZ / paddleBounceRange, -1, 1);
+    const hitY = THREE.MathUtils.clamp(hitOffsetY / paddleBounceRange, -1, 1);
+
+    velocityX = -paddleReturnSpeed;
+    velocityY = hitY * paddleLift;
+    velocityZ = hitZ * paddleSidespin;
   }
 
   function update() {
@@ -117,6 +133,7 @@ export function createBallShooter(params) {
     velocityY = 0;
     velocityZ = 0;
     netCollisionLocked = false;
+    netCollisionLocked = false;
   }
 
   function shootBall() {
@@ -137,6 +154,7 @@ export function createBallShooter(params) {
 
   const g = shooter.gravity;
   const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
+  const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
 
   let attempts = 0;
   let validShot = false;
@@ -144,6 +162,12 @@ export function createBallShooter(params) {
   while (!validShot && attempts < 10) {
     attempts++;
 
+    const targetX = THREE.MathUtils.lerp(
+      tableLength * 0.1,
+      tableLength * 0.28,
+      normalizedPower
+    );
+    const targetZ = THREE.MathUtils.randFloat(-tableWidth * 0.18, tableWidth * 0.18);
     const targetX = THREE.MathUtils.lerp(
       tableLength * 0.1,
       tableLength * 0.28,
@@ -177,12 +201,18 @@ export function createBallShooter(params) {
     const vy = speed * sin;
 
     
+    
     const tToNet = (0 - startX) / vx;
 
     if (tToNet <= 0) continue;
 
     const yAtNet = startY + vy * tToNet - 0.5 * g * tToNet * tToNet;
 
+    const netHeight = tableHeight + 15;
+
+    const timeToTarget = horizontalDist / (speed * cos);
+    const yAtTarget = startY + vy * timeToTarget - 0.5 * g * timeToTarget * timeToTarget;
+    const landsNearTable = Math.abs(yAtTarget - targetY) <= 2;
     const netHeight = tableHeight + 15;
 
     const timeToTarget = horizontalDist / (speed * cos);
@@ -200,6 +230,8 @@ export function createBallShooter(params) {
 
   // fallback if all attempts fail
   if (!validShot) {
+    velocityX = 9;
+    velocityY = 7.5;
     velocityX = 9;
     velocityY = 7.5;
     velocityZ = 0;
@@ -249,14 +281,7 @@ export function createBallShooter(params) {
       paddleBox.setFromObject(paddle);
 
       if (!paddleCollisionLocked && ballBox.intersectsBox(paddleBox)) {
-        const zOffset = ball.position.z - paddle.position.z;
-        const yOffset = ball.position.y - paddle.position.y;
-        const normalizedZ = THREE.MathUtils.clamp(zOffset / 18, -1, 1);
-        const normalizedY = THREE.MathUtils.clamp(yOffset / 18, -1, 1);
-
-        velocityX = -Math.max(Math.abs(velocityX), 3.5);
-        velocityY += normalizedY * 1.2;
-        velocityZ += normalizedZ * 1.6;
+        applyPaddleBounce();
 
         ball.position.x = paddleBox.min.x - ballRadius - 0.5;
         paddleCollisionLocked = true;
@@ -266,6 +291,8 @@ export function createBallShooter(params) {
     }
 
     const outOfBounds =
+      ball.position.x > tableLength / 2 + ballRadius + 60 ||
+      ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.x > tableLength / 2 + ballRadius + 60 ||
       ball.position.x < -tableLength / 2 - ballRadius - 60 ||
       ball.position.y < -ballRadius;
