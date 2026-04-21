@@ -83,6 +83,8 @@ export function createRoom(params = {}) {
 export function createTableLight(params = {}) {
   const {
     tableHeight = TABLE_DEFAULTS.tableHeight,
+    roomHeight = TABLE_DEFAULTS.roomHeight,
+    lampDrop = 300,
     ambientColor = 0xffffff,
     ambientIntensity = 0.6,
     directionalColor = 0xffffff,
@@ -92,20 +94,25 @@ export function createTableLight(params = {}) {
     spotIntensity = 5,
   } = params;
 
+  const lampY = roomHeight - lampDrop;
+  const stringHeight = lampDrop;
+
   const group = new THREE.Group();
 
   const cone = new THREE.Mesh(
     new THREE.ConeGeometry(25, 25, 20),
     new THREE.MeshPhongMaterial({ color: 0x000000 })
   );
-  cone.position.set(0, 150, 0);
+  cone.position.set(0, lampY, 0);
   group.add(cone);
 
+
+
   const string = new THREE.Mesh(
-    new THREE.CylinderGeometry(1, 1, 150, 16),
+    new THREE.CylinderGeometry(1, 1, stringHeight, 16),
     new THREE.MeshPhongMaterial({ color: 0xffffff })
   );
-  string.position.set(0, 225, 0);
+  string.position.set(0, roomHeight - stringHeight / 2, 0);
   group.add(string);
 
   const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
@@ -119,7 +126,7 @@ export function createTableLight(params = {}) {
   group.add(directionalLight);
 
   const spotLight = new THREE.SpotLight(spotColor, spotIntensity);
-  spotLight.position.set(0, 150, 0);
+  spotLight.position.set(0, lampY, 0);
   spotLight.angle = Math.PI / 4;
   spotLight.penumbra = 0.1;
   spotLight.decay = 0;
@@ -172,6 +179,7 @@ export function createTable(params = {}) {
     tableHeight = TABLE_DEFAULTS.tableHeight,
     legRadius = TABLE_DEFAULTS.legRadius,
     netHeight = TABLE_DEFAULTS.netHeight,
+    lampDrop = 100,
   } = params;
 
   const group = new THREE.Group();
