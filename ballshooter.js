@@ -40,7 +40,7 @@ export function createBallShooter(params) {
     machineHeight: tableHeight + 30,
     angle: 8,
     power: 11,
-    gravity: 0.15,
+    gravity: 0.1,
     bounceFactor: 1,
     landr: 0,
     ...initialState,
@@ -276,7 +276,7 @@ export function createBallShooter(params) {
         const xDirection = velocityX === 0 ? 1 : Math.sign(velocityX);
         const retainedSpeed = Math.max(Math.abs(velocityX) * 0.8, 3.5);
         velocityX = -xDirection * retainedSpeed;
-        velocityY *= 0.75;
+        velocityY *= 1;
         ball.position.x = xDirection > 0
           ? netBox.min.x - ballRadius - 0.5
           : netBox.max.x + ballRadius + 0.5;
