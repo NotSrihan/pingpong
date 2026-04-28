@@ -141,12 +141,18 @@ export function makePaddle(params) {
     // Paddle Logo, optional, can not be enabled and not harm anything.
     const logoGeom = new THREE.CircleGeometry(paddleRadius * 0.7, 32);
     const logoMat = new THREE.MeshPhongMaterial({ map: logoTexture, transparent: true, opacity: 0.6, alphaTest: 0.4});
-    const logo = new THREE.Mesh( logoGeom, logoMat );
+    const frontLogo = new THREE.Mesh( logoGeom, logoMat );
+    const backLogo = new THREE.Mesh( logoGeom, logoMat );
 
-    logo.name = "paddleLogo";
+    frontLogo.name = "frontPaddleLogo";
+    backLogo.name = "backPaddleLogo";
 
-    logo.scale.set(1, 1, 1);
-    logo.position.z = paddleBaseDepth / 2 + .01;
+    frontLogo.scale.set(1, 1, 1);
+    frontLogo.position.z = paddleBaseDepth / 2 + .01;
+
+    backLogo.scale.set(1, 1, 1);
+    backLogo.position.z = -(paddleBaseDepth / 2 + .01);
+    backLogo.rotation.y = Math.PI;
 
     group.add(paddle);
     group.add(paddle2);
@@ -155,8 +161,8 @@ export function makePaddle(params) {
     group.add(lowerPaddleFront);
     group.add(lowerPaddleBack);
     group.add(coverPaddle);
-    group.add(logo);
-
+    group.add(frontLogo);
+    group.add(backLogo);
 
     return group;
 
