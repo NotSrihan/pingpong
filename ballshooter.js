@@ -345,7 +345,8 @@ export function createBallShooter(params) {
     }
   }
 
-  const gui = createShooterGUI(shooter, update, shootBall, resetBall, tableHeight);
+  // const gui = createShooterGUI(shooter, update, shootBall, resetBall, tableHeight);
+  const gui = null;
 
   window.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
