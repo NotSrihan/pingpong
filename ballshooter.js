@@ -167,6 +167,7 @@ export function createBallShooter(params) {
   ball = new THREE.Mesh(
     new THREE.SphereGeometry(ballRadius, 16, 16),
     new THREE.MeshPhongMaterial({ color: 0xf06400 })
+  
   );
 
   group.add(ball);
