@@ -21,6 +21,9 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm";
  * @param {number} params.tableLength table length used for bounds
  * @param {number} params.tableWidth table width used for bounce checks
  * @param {number} params.tableHeight table top height used for bounce checks
+ * @param {Function} [params.onScore] callback that receives "player" or "machine"
+ * @param {Function} [params.onRoundStart] callback for a manual new rally
+ * @param {Function} [params.getDifficultyLevel] callback that returns the current difficulty tier
  * @param {Object} [params.initialState] optional shooter overrides
  * @param {boolean} [params.debugNetHitbox=false] whether to show the net hitbox
  * @returns {{group: THREE.Group, gui: GUI, shooter: Object, update: Function, animate: Function, shootBall: Function, resetBall: Function, setPaddle: Function}}
@@ -31,6 +34,9 @@ export function createBallShooter(params) {
     tableLength,
     tableWidth,
     tableHeight,
+    onScore = null,
+    onRoundStart = null,
+    getDifficultyLevel = null,
     debugNetHitbox = false,
     initialState = {},
   } = params;
@@ -139,12 +145,24 @@ export function createBallShooter(params) {
     netCollisionLocked = false;
 
     if (autoShootNext) {
-      shootBall();
+      shootBall(true);
     }
   }
 
-  function shootBall() {
+  function awardPoint(winner, autoShootNext = false) {
+    if (typeof onScore === "function") {
+      onScore(winner);
+    }
+
+    resetBall(autoShootNext);
+  }
+
+  function shootBall(isAutoRestart = false) {
   if (isShooting) return;
+
+  if (!isAutoRestart && typeof onRoundStart === "function") {
+    onRoundStart();
+  }
 
   ball = new THREE.Mesh(
     new THREE.SphereGeometry(ballRadius, 16, 16),
@@ -162,7 +180,16 @@ export function createBallShooter(params) {
   crossedBackToOpponentSide = false;
 
   const g = shooter.gravity;
-  const normalizedPower = THREE.MathUtils.clamp((shooter.power - 1) / 14, 0, 1);
+  const difficultyLevel = typeof getDifficultyLevel === "function"
+    ? getDifficultyLevel()
+    : 0;
+  const adjustedPower = THREE.MathUtils.clamp(
+    shooter.power + difficultyLevel * 0.75,
+    1,
+    15
+  );
+  const normalizedPower = THREE.MathUtils.clamp((adjustedPower - 1) / 14, 0, 1);
+  const lateralSpread = tableWidth * Math.min(0.18 + difficultyLevel * 0.03, 0.3);
 
   let attempts = 0;
   let validShot = false;
@@ -175,7 +202,7 @@ export function createBallShooter(params) {
       tableLength * 0.28,
       normalizedPower
     );
-    const targetZ = THREE.MathUtils.randFloat(-tableWidth * 0.18, tableWidth * 0.18);
+    const targetZ = THREE.MathUtils.randFloat(-lateralSpread, lateralSpread);
     const targetY = tableHeight;
 
     const dx = targetX - startX;
@@ -226,8 +253,8 @@ export function createBallShooter(params) {
 
   // fallback if all attempts fail
   if (!validShot) {
-    velocityX = 9;
-    velocityY = 7.5;
+    velocityX = 9 + difficultyLevel * 0.75;
+    velocityY = 7.5 + difficultyLevel * 0.2;
     velocityZ = 0;
   }
 
@@ -310,7 +337,11 @@ export function createBallShooter(params) {
       ball.position.y < -ballRadius;
 
     if (outOfBounds) {
-      resetBall(crossedBackToOpponentSide);
+      if (crossedBackToOpponentSide) {
+        awardPoint("player", true);
+      } else {
+        resetBall();
+      }
     }
   }
 

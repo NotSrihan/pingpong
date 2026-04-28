@@ -58,13 +58,89 @@ const lightResult = createTableLight({
 });
 scene.add(lightResult.group);
 
+const score = {
+  player: 0,
+};
+
+const scoreboard = document.createElement("div");
+scoreboard.setAttribute("aria-live", "polite");
+scoreboard.style.position = "fixed";
+scoreboard.style.top = "20px";
+scoreboard.style.left = "50%";
+scoreboard.style.transform = "translateX(-50%)";
+scoreboard.style.display = "flex";
+scoreboard.style.alignItems = "center";
+scoreboard.style.gap = "18px";
+scoreboard.style.padding = "12px 20px";
+scoreboard.style.borderRadius = "14px";
+scoreboard.style.background = "rgba(17, 24, 39, 0.78)";
+scoreboard.style.color = "#f9fafb";
+scoreboard.style.letterSpacing = "0.04em";
+scoreboard.style.zIndex = "10";
+scoreboard.style.pointerEvents = "none";
+scoreboard.style.boxShadow = "0 12px 32px rgba(0, 0, 0, 0.22)";
+scoreboard.style.fontFamily = "Arial, sans-serif";
+
+function createScoreCard(labelText) {
+  const card = document.createElement("div");
+  card.style.display = "flex";
+  card.style.flexDirection = "column";
+  card.style.alignItems = "center";
+  card.style.minWidth = "88px";
+
+  const label = document.createElement("span");
+  label.textContent = labelText;
+  label.style.fontSize = "0.72rem";
+  label.style.textTransform = "uppercase";
+  label.style.opacity = "0.8";
+
+  const value = document.createElement("span");
+  value.textContent = "0";
+  value.style.fontSize = "2rem";
+  value.style.fontWeight = "700";
+  value.style.lineHeight = "1";
+
+  card.append(label, value);
+  return { card, value };
+}
+
+const playerCard = createScoreCard("Score");
+scoreboard.append(playerCard.card);
+document.body.append(scoreboard);
+
+function renderScore() {
+  playerCard.value.textContent = String(score.player);
+}
+
+function awardPoint(winner) {
+  if (winner === "player") {
+    score.player += 1;
+  }
+
+  renderScore();
+}
+
+function resetScore() {
+  score.player = 0;
+  renderScore();
+}
+
+function getDifficultyLevel() {
+  return Math.min(Math.floor(score.player / 5), 4);
+}
+
 const shooterResult = createBallShooter({
   netHitbox: tableResult.netHitbox,
   tableLength: tableResult.dimensions.tableLength,
   tableWidth: tableResult.dimensions.tableWidth,
   tableHeight: tableResult.dimensions.tableHeight,
+  onScore: awardPoint,
+  onRoundStart: resetScore,
+  getDifficultyLevel,
 });
 scene.add(shooterResult.group);
+
+renderScore();
 
 var paddle;
 
