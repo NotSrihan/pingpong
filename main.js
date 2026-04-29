@@ -177,17 +177,25 @@ remakePaddle();
 
 // Had to look up how to do this
 function setLogoFromFile(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    return;
+  }
 
   const texture = new THREE.TextureLoader().load(
     URL.createObjectURL(file),
     () => {
-      const logo = paddle.getObjectByName("paddleLogo");
-      if (!logo) return;
+      const logos = [
+        paddle.getObjectByName("frontPaddleLogo"),
+        paddle.getObjectByName("backPaddleLogo"),
+      ].filter(Boolean);
 
-      if (logo.material.map) logo.material.map.dispose();
+      if (logos.length === 0) return;
 
-      logo.material.map = texture;
-      logo.material.needsUpdate = true;
+      for (const logo of logos) {
+        if (logo.material.map) logo.material.map.dispose();
+        logo.material.map = texture;
+        logo.material.needsUpdate = true;
+      }
     }
   );
 }

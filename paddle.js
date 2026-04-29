@@ -140,7 +140,7 @@ export function makePaddle(params) {
     // =============
     // Paddle Logo, optional, can not be enabled and not harm anything.
     const logoGeom = new THREE.CircleGeometry(paddleRadius * 0.7, 32);
-    const logoMat = new THREE.MeshPhongMaterial({ map: logoTexture, transparent: true, opacity: 0.6, alphaTest: 0.4});
+    const logoMat = new THREE.MeshPhongMaterial({ map: logoTexture, alphaTest: 0.4 });
     const frontLogo = new THREE.Mesh( logoGeom, logoMat );
     const backLogo = new THREE.Mesh( logoGeom, logoMat );
 

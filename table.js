@@ -12,6 +12,16 @@ export const TABLE_DEFAULTS = {
   netHeight: 15.25,
 };
 
+export const ROOM_POSTER_DEFAULTS = [
+  { texturePath: "./textures/SSBU.jpeg", wall: "back", slot: 0, y: 250 },
+  { texturePath: "./textures/siliconvalley.jpeg", wall: "back", slot: 2, y: 250 },
+  { texturePath: "./textures/sewaneetigers.png", wall: "front", slot: 1, y: 250, maxWidth: 280, maxHeight: 180 },
+  { texturePath: "./textures/pong.jpeg", wall: "left", slot: 0, y: 245, maxWidth: 130, maxHeight: 175 },
+  { texturePath: "./textures/pong2.jpeg", wall: "left", slot: 2, y: 245, maxWidth: 130, maxHeight: 175 },
+  { texturePath: "./textures/luffy.jpeg", wall: "right", slot: 0, y: 245 },
+  { texturePath: "./textures/zoro.jpeg", wall: "right", slot: 2, y: 245 },
+];
+
 /**
  * Create a room centered on the x/z axes with the floor on y = 0.
  *
@@ -38,19 +48,144 @@ export function createRoom(params = {}) {
     roomLength = TABLE_DEFAULTS.roomLength,
     roomWidth = TABLE_DEFAULTS.roomWidth,
     roomHeight = TABLE_DEFAULTS.roomHeight,
+    posters = ROOM_POSTER_DEFAULTS,
     material = new THREE.MeshPhongMaterial({
-      color: 0xadd8e6,
+      color: 0xF5DABA,
       side: THREE.BackSide,
       // transparent: true,
       // opacity: 0.5
     }),
   } = params;
 
+  const group = new THREE.Group();
+
   const geometry = new THREE.BoxGeometry(roomLength, roomHeight, roomWidth);
   const room = new THREE.Mesh(geometry, material);
   room.position.y = roomHeight / 2;
   room.receiveShadow = true;
-  return room;
+  group.add(room);
+
+  const floorTexture = new THREE.TextureLoader().load("./textures/Woodfloor.jpeg");
+  floorTexture.colorSpace = THREE.SRGBColorSpace;
+  floorTexture.wrapS = THREE.RepeatWrapping;
+  floorTexture.wrapT = THREE.RepeatWrapping;
+  floorTexture.repeat.set(6, 6);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(roomLength, roomWidth),
+    new THREE.MeshPhongMaterial({ map: floorTexture })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.5;
+  floor.receiveShadow = true;
+  group.add(floor);
+
+  const loader = new THREE.TextureLoader();
+
+  function addPoster({
+    texturePath,
+    width,
+    height,
+    position,
+    rotation = new THREE.Euler(),
+  }) {
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(width + 10, height + 10, 4),
+      new THREE.MeshPhongMaterial({ color: 0x3b2a1f })
+    );
+    frame.position.copy(position);
+    frame.rotation.copy(rotation);
+    frame.castShadow = true;
+    group.add(frame);
+
+    const posterTexture = loader.load(texturePath);
+    posterTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const poster = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, height),
+      new THREE.MeshPhongMaterial({ map: posterTexture })
+    );
+
+    const depthOffset = 2.1;
+    poster.position.copy(position);
+    poster.rotation.copy(rotation);
+
+    if (Math.abs(rotation.y) < 0.01) {
+      poster.position.z += depthOffset;
+    } else if (Math.abs(Math.abs(rotation.y) - Math.PI) < 0.01) {
+      poster.position.z -= depthOffset;
+    } else if (rotation.y > 0) {
+      poster.position.x += depthOffset;
+    } else {
+      poster.position.x -= depthOffset;
+    }
+
+    group.add(poster);
+  }
+
+  function fitPosterSize(image, maxWidth = 110, maxHeight = 150) {
+    const aspectRatio = image && image.height ? image.width / image.height : 1;
+
+    let width = maxWidth;
+    let height = width / aspectRatio;
+
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * aspectRatio;
+    }
+
+    return { width, height };
+  }
+
+  function addWallPoster({
+    texturePath,
+    wall,
+    slot,
+    y = 245,
+    maxWidth = 110,
+    maxHeight = 150,
+  }) {
+    const wallPositions = {
+      back: {
+        position: new THREE.Vector3(-160 + slot * 160, y, -roomWidth / 2 + 2),
+        rotation: new THREE.Euler(0, 0, 0),
+      },
+      front: {
+        position: new THREE.Vector3(-160 + slot * 160, y, roomWidth / 2 - 2),
+        rotation: new THREE.Euler(0, Math.PI, 0),
+      },
+      left: {
+        position: new THREE.Vector3(-roomLength / 2 + 2, y, -170 + slot * 170),
+        rotation: new THREE.Euler(0, Math.PI / 2, 0),
+      },
+      right: {
+        position: new THREE.Vector3(roomLength / 2 - 2, y, -170 + slot * 170),
+        rotation: new THREE.Euler(0, -Math.PI / 2, 0),
+      },
+    };
+
+    const placement = wallPositions[wall];
+    if (!placement) return;
+
+    loader.load(texturePath, (texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const { width, height } = fitPosterSize(texture.image, maxWidth, maxHeight);
+
+      addPoster({
+        texturePath,
+        width,
+        height,
+        position: placement.position,
+        rotation: placement.rotation,
+      });
+    });
+  }
+
+  for (const poster of posters) {
+    addWallPoster(poster);
+  }
+
+  return group;
 }
 
 /**

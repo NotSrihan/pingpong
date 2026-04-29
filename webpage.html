@@ -1,73 +1,237 @@
-<html lang="en"><head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
-    <link rel="stylesheet" href="style.css">
-    <meta name="author" content="Suzie Sewanee">
-    <title>CS 360 Graphics Project by Srijan Basnet & Ethan Woodard</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 360 Graphics Project | Ping Pong</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #ffffff;
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --text: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background:
+                linear-gradient(135deg, rgba(37, 99, 235, 0.15), transparent),
+                linear-gradient(225deg, rgba(14, 165, 233, 0.1), transparent),
+                var(--light);
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 4rem;
+            background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+            color: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            margin-top: 1.5rem;
+            font-size: 1.35rem;
+            opacity: 0.95;
+        }
+
+        section {
+            background: var(--card);
+            margin-bottom: 3rem;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 2rem;
+            border-bottom: 3px solid #dbeafe;
+            padding-bottom: 0.75rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        figure {
+            margin: 2.5rem 0;
+            text-align: center;
+        }
+
+        img {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        img:hover {
+            transform: scale(1.02);
+        }
+
+        figcaption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: var(--secondary);
+        }
+
+        ol {
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            font-size: 1.05rem;
+        }
+
+        code {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-family: "SF Mono", Monaco, monospace;
+        }
+
+        .play-button {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.15rem;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+        }
+
+        .play-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.45);
+        }
+
+        footer {
+            text-align: center;
+            color: var(--secondary);
+            padding: 2rem;
+        }
+    </style>
 </head>
 <body>
 
 <main>
-    <h1>CS 360 Graphics Project by Srijan Basnet & Ethan Woodard</h1>
+    <header class="hero">
+        <h1>3D Ping Pong</h1>
+        <p>CS 360 Graphics Project by Srijan Basnet & Ethan Woodard</p>
+    </header>
 
-    <h2>Ping Pong is fun, we have Ping Pong in Biehl, that movie about Ping Pong came out recently.</h2>
-    <h2>So let's make Ping Pong.</h2>
+    <section>
+        <h2>Project Description</h2>
+        <p>
+           This project is a 3D ping pong game built with Three.js. The scene includes a full table tennis setup with a 
+           modeled table, net, lighting, room environment, and a custom paddle that the player controls in real time.
+            A ball launcher on the opposite side of the table serves balls toward the player, and the goal is to return 
+            each shot successfully. The game keeps track of your score, and the difficulty increases as you score more 
+            points, making each rally more challenging. The paddle also supports a custom logo texture, adding a small 
+            personalization feature to the project.
+        </p>
 
-    <p>Functioning, of course.</p>
+        <p>
+            Our project recreates the classic table tennis experience with realistic physics,
+            responsive controls, and immersive gameplay using modern web graphics.
+        </p>
 
-    <figure>
-        <img src="textures/pingPongView1.png" width="700" height="500" alt="text description">
-        <figcaption>Information about the picture</figcaption>
-    </figure>
+        <figure>
+            <img src="textures/pingPongView1.png" alt="3D Ping Pong gameplay screenshot">
+            <figcaption>
+                A gameplay view showcasing our 3D Ping Pong simulation.
+            </figcaption>
+        </figure>
+    </section>
 
-    <p>The SRC for the IMG tag can be any URL on the internet, but
-        URLs can change from time to time, so it's often better to do
-        the following:</p>
+    <section>
+        <h2>Features</h2>
+        <ol>
+            <li>Fully interactive 3D ping pong table and environment.</li>
+            <li>Realistic ball physics and paddle collisions.</li>
+            <li>Smooth mouse-controlled paddle movement.</li>
+            <li>Dynamic camera perspectives for immersive gameplay.</li>
+            <li>Single-player practice and competitive play.</li>
+        </ol>
+    </section>
 
-    <ol>
-        <li>Download the picture to your laptop.</li>
-        <li>Optionally, rename it to something concise and memorable.</li>
-        <li>Copy the picture to your project folder on the server.</li>
-        <li>Put the <em>filename</em> of the picture as the URL of the image.</li>
-    </ol>
+    <section>
+        <h2>Development Highlights</h2>
+        <p>
+            This project was built using Three.js and demonstrates concepts from computer graphics,
+            including hierarchical modeling, lighting, textures, collision detection,
+            and real-time animation.
+        </p>
 
-    <p>You might need to use the <code>chmod</code> command, as
-        needed, to ensure that the permissions for the files and
-        subfolders of your project folder are okay.</p>
+        <p>
+            Creating a responsive and realistic table tennis experience required careful tuning
+            of physics parameters, paddle controls, and camera behavior.
+        </p>
+    </section>
+    <section>
+        <h2> How To Play </h2>
+        <p>
+            Press the spacebar to start a round and launch the ball. Move your mouse to control the paddle on your side 
+            of the table. The paddle follows the mouse and can move up, down, and side to side to return the ball. Your 
+            goal is to hit the ball back over the net and onto the opponent’s side of the table. Each successful return 
+            that completes the rally earns you a point. As your score increases by 5, the launcher serves faster and more 
+            difficult shots until it gets to 25, at which point it stops getting harder. You can also drag and drop an 
+            image file into the window to change the paddle logo.
+        </p>
+    </section>
 
-    <h2>My Project</h2>
+    <section>
+        <h2>Play the Game</h2>
+        <p>
+            Ready to test your reflexes? Launch the project and start playing.
+        </p>
 
-    <p>Here is more information about my project.</p>
+        <a href="main.html" class="play-button">Play Ping Pong</a>
+    </section>
 
-    <p>I can have as many paragraphs as I want.</p>
-
-    <p>I can also display stills (screenshots) from my project.</p>
-
-    <figure>
-        <img src="url of screenshot" alt="text description">
-        <figcaption>Information about the screenshot</figcaption>
-    </figure>
-
-    <p>On my computer, the screenshots usually have yucky filenames
-        like <code>Screenshot 2026-04-22 at 2.55.18 PM.png</code>, so
-        I would rename that file to be something
-        like <code>screenshot1.png</code>
-        or <code>view-from-above.png</code> or something more mnemonic
-        than a timestamp.</p>
-
-    <p>Again, I can have as many screenshots as a I want.</p>
-
-    <h2>The Running Project</h2>
-
-    <p>Here is a <a href="main.html">link to the project itself</a>.</p>
-
-
+    <footer>
+        CS 360 Computer Graphics • Spring 2026
+    </footer>
 </main>
 
-<!-- JavaScript at the bottom -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
-
-
-</body></html>
+</body>
+</html>
