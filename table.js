@@ -89,13 +89,43 @@ export function createRoom(params = {}) {
     position,
     rotation = new THREE.Euler(),
   }) {
-    const frame = new THREE.Mesh(
-      new THREE.BoxGeometry(width + 10, height + 10, 4),
-      new THREE.MeshPhongMaterial({ color: 0x3b2a1f })
+    const frame = new THREE.Group();
+
+    const frameMaterial = new THREE.MeshPhongMaterial({color: 0x3b2a1f, side: THREE.FrontSide});    
+    const border = 5;
+    const thickness = 4;
+    
+    // Top side
+    const top = new THREE.Mesh(
+      new THREE.BoxGeometry(width + border * 2, border, thickness),
+      frameMaterial
     );
+    top.position.y = height / 2 + border / 2;
+    
+    // Bottom side
+    const bottom = new THREE.Mesh(
+      new THREE.BoxGeometry(width + border * 2, border, thickness),
+      frameMaterial
+    );
+    bottom.position.y = -height / 2 - border / 2;
+    
+    // Left side
+    const left = new THREE.Mesh(
+      new THREE.BoxGeometry(border, height, thickness),
+      frameMaterial
+    );
+    left.position.x = -width / 2 - border / 2;
+    
+    // Right side
+    const right = new THREE.Mesh(
+      new THREE.BoxGeometry(border, height, thickness),
+      frameMaterial
+    );
+    right.position.x = width / 2 + border / 2;
+    
+    frame.add(top, bottom, left, right);
     frame.position.copy(position);
     frame.rotation.copy(rotation);
-    frame.castShadow = true;
     group.add(frame);
 
     const posterTexture = loader.load(texturePath);
@@ -103,7 +133,7 @@ export function createRoom(params = {}) {
 
     const poster = new THREE.Mesh(
       new THREE.PlaneGeometry(width, height),
-      new THREE.MeshPhongMaterial({ map: posterTexture })
+      new THREE.MeshPhongMaterial({ map: posterTexture, side: THREE.FrontSide, transparent: true,})
     );
 
     const depthOffset = 2.1;
